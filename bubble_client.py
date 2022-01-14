@@ -129,10 +129,26 @@ class BubbleThing(NamesMixin, Thingy):
         return await cls._get_first(**params)
 
     async def _join_by_cursor(self, key, cursor):
-        if other_id := getattr(self, key):
-            cursor.cache = True
+        other_id_or_ids = getattr(self, key)
+        if not other_id_or_ids:
+            return
+
+        cursor.cache = True
+
+        # TODO: fill with None when we can't find an id
+        if isinstance(other_id_or_ids, list):
+            others = []
             async for other in cursor:
-                if other._id == other_id:
+                if other._id in other_id_or_ids:
+                    cursor.rewind()
+                    others.append(other)
+                    if len(others) == len(other_id_or_ids):
+                        break
+            setattr(self, key, others)
+            return
+        else:
+            async for other in cursor:
+                if other._id == other_id_or_ids:
                     cursor.rewind()
                     setattr(self, key, other)
                     break
@@ -140,7 +156,18 @@ class BubbleThing(NamesMixin, Thingy):
                 setattr(self, key, None)
 
     async def _join_by_cls(self, key, other_cls, **params):
-        if other_id := getattr(self, key):
+        other_id_or_ids = getattr(self, key)
+        if not other_id_or_ids:
+            return
+
+        # TODO: use a constraint and filter on the ids instead
+        if isinstance(other_id_or_ids, list):
+            others = []
+            async for other_id in other_id_or_ids:
+                other = other_cls._get_by_id(other_id, **params)
+                others.append(other)
+            setattr(self, key, others)
+        else:
             other = await other_cls._get_by_id(other_id, **params)
             setattr(self, key, other)
 

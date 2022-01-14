@@ -59,8 +59,4 @@ class BubbleThing(NamesMixin, Thingy):
 configure = BubbleThing.configure
 
 
-class User(BubbleThing):
-    pass
-
-
-__all__ = ("BubbleThing", "configure", "User")
+__all__ = ("BubbleThing", "configure")

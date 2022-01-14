@@ -19,7 +19,8 @@ class BubbleThing(NamesMixin, Thingy):
         if headers is None:
             headers = {}
         cls._headers = headers
-        cls._headers.setdefault("Authorization", f"Bearer {token}")
+        if token:
+            cls._headers.setdefault("Authorization", f"Bearer {token}")
 
     @classproperty
     def base_url(cls):

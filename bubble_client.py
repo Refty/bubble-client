@@ -75,6 +75,14 @@ class BubbleThing(NamesMixin, Thingy):
     def get(cls, **params):
         return Cursor(cls, params)
 
+    @classmethod
+    async def get_one(cls, **params):
+        params["limit"] = 1
+        try:
+            return await cls.get(**params).__anext__()
+        except StopAsyncIteration:
+            return None
+
 
 configure = BubbleThing.configure
 

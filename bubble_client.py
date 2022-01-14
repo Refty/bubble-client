@@ -61,8 +61,10 @@ class Cursor:
     def rewind(self):
         self.index = 0
 
-    def join(self, key, other_cls, **params):
-        self.joins[key] = Cursor(other_cls, params, cache=True)
+    def join(self, key, cursor_or_other_cls, **params):
+        if not isinstance(cursor_or_other_cls, Cursor):
+            cursor_or_other_cls = Cursor(cursor_or_other_cls, params, cache=True)
+        self.joins[key] = cursor_or_other_cls
         return self
 
 
@@ -132,7 +134,6 @@ class BubbleThing(NamesMixin, Thingy):
         other_id_or_ids = getattr(self, key)
         if not other_id_or_ids:
             return
-
         cursor.cache = True
 
         # TODO: fill with None when we can't find an id

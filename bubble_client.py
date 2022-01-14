@@ -136,15 +136,18 @@ class BubbleThing(NamesMixin, Thingy):
             return
         cursor.cache = True
 
-        # TODO: fill with None when we can't find an id
+        # TODO: fill with None when we can't find an id and guarantee the original order
         if isinstance(other_id_or_ids, list):
             others = []
             async for other in cursor:
-                if other._id in other_id_or_ids:
-                    cursor.rewind()
-                    others.append(other)
-                    if len(others) == len(other_id_or_ids):
+                for index, other_id in enumerate(other_id_or_ids):
+                    if other._id == other_id:
+                        cursor.rewind()
+                        others.append(other)
+                        other_id_or_ids.pop(index)
                         break
+                if len(other_id_or_ids) == 0:
+                    break
             setattr(self, key, others)
             return
         else:

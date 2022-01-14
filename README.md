@@ -30,9 +30,9 @@ Examples
 
 >>> async for user in User.get():
 ...     print(user)
-User({'name': 'Dr. Jekyll', ...)
-User({'name': 'Mr. Hyde', ...)
+User({'name': 'Dr. Jekyll', ...})
+User({'name': 'Mr. Hyde', ...})
 
 >>> user.name
-"Mr. Hyde"
+'Mr. Hyde'
 ```

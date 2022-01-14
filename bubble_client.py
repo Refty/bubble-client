@@ -76,12 +76,32 @@ class BubbleThing(NamesMixin, Thingy):
         return Cursor(cls, params)
 
     @classmethod
-    async def get_one(cls, **params):
+    async def _get_by_id(cls, id, **params):
+        async with AsyncClient(base_url=cls.base_url) as client:
+            response = await client.get(
+                f"/api/1.1/obj/{cls.typename}/{id}",
+                params=params,
+                headers=cls._headers,
+            )
+            response.raise_for_status()
+
+        bubble_object = response.json()["response"]
+        if bubble_object:
+            return cls(bubble_object)
+
+    @classmethod
+    async def _get_first(cls, **params):
         params["limit"] = 1
         try:
             return await cls.get(**params).__anext__()
         except StopAsyncIteration:
             return None
+
+    @classmethod
+    async def get_one(cls, id=None, **params):
+        if id:
+            return await cls._get_by_id(id, **params)
+        return await cls._get_first(**params)
 
 
 configure = BubbleThing.configure

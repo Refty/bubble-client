@@ -49,7 +49,7 @@ class BubbleThing(NamesMixin, Thingy):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__dict__ = {
-            key.replace(" ", "_"): value for key, value in self.__dict__.items()
+            key.replace(" ", "_").lower(): value for key, value in self.__dict__.items()
         }
 
     @classmethod

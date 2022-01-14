@@ -94,7 +94,7 @@ class BubbleThing(NamesMixin, Thingy):
 
     @classproperty
     def typename(cls):
-        return cls._typename or "_".join(cls.names)
+        return cls._typename or "".join(cls.names)
 
     @classmethod
     def get(cls, **params):

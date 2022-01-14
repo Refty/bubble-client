@@ -3,11 +3,14 @@ from thingy import NamesMixin, Thingy, classproperty
 
 
 class Cursor:
-    def __init__(self, cls, params):
+    def __init__(self, cls, params, cache=False):
         self.cls = cls
         self.params = params
         self.index = self.params.get("cursor", 0)
         self.page = None
+        self.joins = {}
+        self.cache = cache
+        self.cached = []
 
     async def _get_page(self):
         self.params["cursor"] = self.index
@@ -29,6 +32,14 @@ class Cursor:
         return self
 
     async def __anext__(self):
+        try:
+            bubble_object = self.cached[self.index]
+        except IndexError:
+            pass
+        else:
+            self.index += 1
+            return bubble_object
+
         if not self.page or self.page_index == self.page["count"]:
             self.page = await self._get_page()
 
@@ -38,7 +49,21 @@ class Cursor:
             raise StopAsyncIteration
 
         self.index += 1
-        return self.cls(bubble_object)
+        bubble_object = self.cls(bubble_object)
+
+        for key, cursor in self.joins.items():
+            await bubble_object.join(key, cursor)
+
+        if self.cache:
+            self.cached.append(bubble_object)
+        return bubble_object
+
+    def rewind(self):
+        self.index = 0
+
+    def join(self, key, other_cls, **params):
+        self.joins[key] = Cursor(other_cls, params, cache=True)
+        return self
 
 
 class BubbleThing(NamesMixin, Thingy):
@@ -102,6 +127,28 @@ class BubbleThing(NamesMixin, Thingy):
         if id:
             return await cls._get_by_id(id, **params)
         return await cls._get_first(**params)
+
+    async def _join_by_cursor(self, key, cursor):
+        if other_id := getattr(self, key):
+            cursor.cache = True
+            async for other in cursor:
+                if other._id == other_id:
+                    cursor.rewind()
+                    setattr(self, key, other)
+                    break
+            else:
+                setattr(self, key, None)
+
+    async def _join_by_cls(self, key, other_cls, **params):
+        if other_id := getattr(self, key):
+            other = await other_cls._get_by_id(other_id, **params)
+            setattr(self, key, other)
+
+    async def join(self, key, cursor_or_other_cls, **params):
+        if isinstance(cursor_or_other_cls, Cursor):
+            return await self._join_by_cursor(key, cursor_or_other_cls)
+        else:
+            return await self._join_by_cls(key, cursor_or_other_cls, **params)
 
 
 configure = BubbleThing.configure

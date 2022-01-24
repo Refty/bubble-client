@@ -61,6 +61,11 @@ class Cursor:
             self.cached.append(bubble_object)
         return bubble_object
 
+    async def count(self):
+        if not self.page:
+            self.page = await self._get_page()
+        return self.page["cursor"] + self.page["count"] + self.page["remaining"]
+
     def rewind(self):
         self.index = 0
 
@@ -132,6 +137,11 @@ class BubbleThing(NamesMixin, Thingy):
         if id:
             return await cls._get_by_id(id, **params)
         return await cls._get_first(**params)
+
+    @classmethod
+    async def count(cls, **params):
+        params["limit"] = 1
+        return await cls.get(**params).count()
 
     async def _join_by_cursor(self, key, cursor):
         other_id_or_ids = getattr(self, key)

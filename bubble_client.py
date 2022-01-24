@@ -1,3 +1,5 @@
+import json
+
 from httpx import AsyncClient
 from thingy import NamesMixin, Thingy, classproperty
 
@@ -16,9 +18,10 @@ class Cursor:
         self.params["cursor"] = self.index
 
         async with AsyncClient(base_url=self.cls.base_url) as client:
+            params = {key: json.dumps(value) for key, value in self.params.items()}
             response = await client.get(
                 f"/api/1.1/obj/{self.cls.typename}",
-                params=self.params,
+                params=params,
                 headers=self.cls._headers,
             )
             response.raise_for_status()

@@ -83,9 +83,18 @@ class BubbleThing(NamesMixin, Thingy):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__dict__ = {
-            key.replace(" ", "_").lower(): value for key, value in self.__dict__.items()
-        }
+
+        __dict__ = {}
+        includes = []
+
+        for key, value in self.__dict__.items():
+            alias = key.replace(" ", "_").lower()
+            __dict__[alias] = value
+            if key not in ("Modified Date", "Created Date", "Created By", "_id"):
+                includes.append((alias, key))
+
+        self.__dict__ = __dict__
+        self.add_view("bubble", include=includes)
 
     @classmethod
     def configure(cls, base_url, token, headers=None):
@@ -194,6 +203,27 @@ class BubbleThing(NamesMixin, Thingy):
         else:
             return await self._join_by_cls(key, cursor_or_other_cls, **params)
 
+    async def save(self, **params):
+        async with AsyncClient(base_url=self.__class__._base_url) as client:
+            if self._id:
+                response = await client.put(
+                    f"/api/1.1/obj/{self.__class__.typename}/{self._id}",
+                    params=params,
+                    headers=self.__class__._headers,
+                    json=self.view("bubble"),
+                )
+                response.raise_for_status()
+            else:
+                response = await client.post(
+                    f"/api/1.1/obj/{self.__class__.typename}",
+                    params=params,
+                    headers=self.__class__._headers,
+                    json=self.view("bubble"),
+                )
+                response.raise_for_status()
+                self._id = response.json()["id"]
+
+        return self
 
 configure = BubbleThing.configure
 

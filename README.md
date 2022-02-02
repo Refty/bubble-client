@@ -30,11 +30,36 @@ Examples
 
 >>> async for user in User.get():
 ...     print(user)
+User({'name': 'Beatrix Emery', ...})
 User({'name': 'Dr. Jekyll', ...})
-User({'name': 'Mr. Hyde', ...})
 
 >>> user.name
+'Dr. Jekyll'
+```
+
+* Change values:
+
+```python
+>>> user.name = "Mr. Hyde"
+>>> await user.save()
+>>> user.name
 'Mr. Hyde'
+```
+
+* Count users:
+
+```python
+>>> User.count()
+2
+```
+
+* Add a new user:
+
+```python
+>>> user = User(name="Sir Charles Emery")
+>>> await user.save()
+>>> User.count()
+3
 ```
 
 * Join stuff!
@@ -59,6 +84,6 @@ User({'name': 'Mr. Hyde', ...})
 ```python
 >>> async for pet in Pet.get().join("created_by", User):
 ...     print(pet)
-Pet({'type': 'dog', 'created_by': User({'name': 'Dr. Jekyll', ...}), ...})
-Pet({'type': 'donkey', 'created_by': User({'name': 'Dr. Jekyll', ...}), ...})
+Pet({'type': 'dog', 'created_by': User({'name': 'Mr. Hyde', ...}), ...})
+Pet({'type': 'donkey', 'created_by': User({'name': 'Beatrix Emery', ...}), ...})
 ```

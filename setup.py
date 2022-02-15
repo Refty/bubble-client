@@ -8,7 +8,7 @@ def get_description():
 
 setup(
     name="bubble-client",
-    version="0.4.0",
+    version="0.5.0",
     url="https://github.com/Refty/bubble-client",
     author="Guillaume Gelin",
     author_email="guillaume@refty.co",

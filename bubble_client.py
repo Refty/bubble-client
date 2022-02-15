@@ -203,27 +203,34 @@ class BubbleThing(NamesMixin, Thingy):
         else:
             return await self._join_by_cls(key, cursor_or_other_cls, **params)
 
-    async def save(self, **params):
+    async def put(self, **params):
         async with AsyncClient(base_url=self.__class__._base_url) as client:
-            if self._id:
-                response = await client.put(
-                    f"/api/1.1/obj/{self.__class__.typename}/{self._id}",
-                    params=params,
-                    headers=self.__class__._headers,
-                    json=self.view("bubble"),
-                )
-                response.raise_for_status()
-            else:
-                response = await client.post(
-                    f"/api/1.1/obj/{self.__class__.typename}",
-                    params=params,
-                    headers=self.__class__._headers,
-                    json=self.view("bubble"),
-                )
-                response.raise_for_status()
-                self._id = response.json()["id"]
-
+            response = await client.put(
+                f"/api/1.1/obj/{self.__class__.typename}/{self._id}",
+                params=params,
+                headers=self.__class__._headers,
+                json=self.view("bubble"),
+            )
+            response.raise_for_status()
         return self
+
+    async def post(self, **params):
+        async with AsyncClient(base_url=self.__class__._base_url) as client:
+            response = await client.post(
+                f"/api/1.1/obj/{self.__class__.typename}",
+                params=params,
+                headers=self.__class__._headers,
+                json=self.view("bubble"),
+            )
+            response.raise_for_status()
+            self._id = response.json()["id"]
+        return self
+
+    async def save(self, **params):
+        if self._id:
+            return self.put(**params)
+        return self.post(**params)
+
 
 configure = BubbleThing.configure
 

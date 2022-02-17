@@ -1,10 +1,32 @@
 import json
+from datetime import datetime
 
-from httpx import AsyncClient
+import httpx
 from thingy import NamesMixin, Thingy, classproperty
 
 
+class JSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, (datetime.date, datetime.datetime)):
+            return o.isoformat()
+        return json.JSONEncoder.default(self, o)
+
+
+class AsyncClient(httpx.AsyncClient):
+    _json_encoder = JSONEncoder
+
+    async def request(self, *args, **kwargs):
+        if "json" in kwargs:
+            json = kwargs.pop("json")
+            kwargs["content"] = self._json_encoder.dumps(json)
+            kwargs.setdefault("headers", {})
+            kwargs["headers"]["Content-Type"] = "application/json"
+        return await super().request(*args, **kwargs)
+
+
 class Cursor:
+    _json_encoder = JSONEncoder
+
     def __init__(self, cls, params, cache=False):
         self.cls = cls
         self.params = params
@@ -76,6 +98,8 @@ class Cursor:
 
 class BubbleThing(NamesMixin, Thingy):
     _base_url = None
+    _client_cls = AsyncClient
+    _json_encoder = JSONEncoder
     _headers = {}
     _typename = None
 
@@ -115,7 +139,7 @@ class BubbleThing(NamesMixin, Thingy):
 
     @classmethod
     def _get_client(cls):
-        return AsyncClient(
+        return cls._client_cls(
             base_url=cls._base_url,
             headers=cls._headers,
         )
@@ -124,7 +148,7 @@ class BubbleThing(NamesMixin, Thingy):
     def _dump_params(cls, params):
         for key, value in params.items():
             if not isinstance(value, str):
-                params[key] = json.dumps(value)
+                params[key] = json.dumps(value, cls=cls._json_encoder)
 
     @classmethod
     def get(cls, **params):

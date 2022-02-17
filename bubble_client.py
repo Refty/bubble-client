@@ -22,11 +22,10 @@ class Cursor:
             if not isinstance(value, str):
                 params[key] = json.dumps(value)
 
-        async with AsyncClient(base_url=self.cls.base_url) as client:
+        async with self.cls._get_client() as client:
             response = await client.get(
                 f"/api/1.1/obj/{self.cls.typename}",
                 params=params,
-                headers=self.cls._headers,
             )
             response.raise_for_status()
         return response.json()["response"]
@@ -120,16 +119,22 @@ class BubbleThing(NamesMixin, Thingy):
         return cls._typename or "".join(cls.names)
 
     @classmethod
+    def _get_client(cls):
+        return AsyncClient(
+            base_url=cls._base_url,
+            headers=cls._headers,
+        )
+
+    @classmethod
     def get(cls, **params):
         return Cursor(cls, params)
 
     @classmethod
     async def _get_by_id(cls, id, **params):
-        async with AsyncClient(base_url=cls.base_url) as client:
+        async with cls._get_client() as client:
             response = await client.get(
                 f"/api/1.1/obj/{cls.typename}/{id}",
                 params=params,
-                headers=cls._headers,
             )
             response.raise_for_status()
 
@@ -208,22 +213,20 @@ class BubbleThing(NamesMixin, Thingy):
             return await self._join_by_cls(key, cursor_or_other_cls, **params)
 
     async def put(self, **params):
-        async with AsyncClient(base_url=self.__class__._base_url) as client:
+        async with self._get_client() as client:
             response = await client.put(
                 f"/api/1.1/obj/{self.__class__.typename}/{self._id}",
                 params=params,
-                headers=self.__class__._headers,
                 json=self.view("bubble"),
             )
             response.raise_for_status()
         return self
 
     async def post(self, **params):
-        async with AsyncClient(base_url=self.__class__._base_url) as client:
+        async with self._get_client() as client:
             response = await client.post(
                 f"/api/1.1/obj/{self.__class__.typename}",
                 params=params,
-                headers=self.__class__._headers,
                 json=self.view("bubble"),
             )
             response.raise_for_status()

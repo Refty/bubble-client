@@ -17,15 +17,10 @@ class Cursor:
     async def _get_page(self):
         self.params["cursor"] = self.index
 
-        params = self.params.copy()
-        for key, value in params.items():
-            if not isinstance(value, str):
-                params[key] = json.dumps(value)
-
         async with self.cls._get_client() as client:
             response = await client.get(
                 f"/api/1.1/obj/{self.cls.typename}",
-                params=params,
+                params=self.params,
             )
             response.raise_for_status()
         return response.json()["response"]
@@ -126,11 +121,19 @@ class BubbleThing(NamesMixin, Thingy):
         )
 
     @classmethod
+    def _dump_params(cls, params):
+        for key, value in params.items():
+            if not isinstance(value, str):
+                params[key] = json.dumps(value)
+
+    @classmethod
     def get(cls, **params):
+        cls._dump_params(params)
         return Cursor(cls, params)
 
     @classmethod
     async def _get_by_id(cls, id, **params):
+        cls._dump_params(params)
         async with cls._get_client() as client:
             response = await client.get(
                 f"/api/1.1/obj/{cls.typename}/{id}",
@@ -213,6 +216,7 @@ class BubbleThing(NamesMixin, Thingy):
             return await self._join_by_cls(key, cursor_or_other_cls, **params)
 
     async def put(self, **params):
+        self._dump_params(params)
         async with self._get_client() as client:
             response = await client.put(
                 f"/api/1.1/obj/{self.__class__.typename}/{self._id}",
@@ -223,6 +227,7 @@ class BubbleThing(NamesMixin, Thingy):
         return self
 
     async def post(self, **params):
+        self._dump_params(params)
         async with self._get_client() as client:
             response = await client.post(
                 f"/api/1.1/obj/{self.__class__.typename}",

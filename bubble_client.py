@@ -49,8 +49,16 @@ class JSONEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
+async def raise_for_status(response):
+    response.raise_for_status()
+
+
 class AsyncClient(httpx.AsyncClient):
     _json_encoder = JSONEncoder
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("event_hooks", {"response": [raise_for_status]})
+        super().__init__(*args, **kwargs)
 
     async def request(self, *args, **kwargs):
         if "json" in kwargs:
@@ -83,7 +91,6 @@ class Cursor:
                 f"/api/1.1/obj/{self.cls.typename}",
                 params=self.params,
             )
-            response.raise_for_status()
         return response.json()["response"]
 
     @property
@@ -202,7 +209,6 @@ class BubbleThing(NamesMixin, Thingy):
                 f"/api/1.1/obj/{cls.typename}/{id}",
                 params=params,
             )
-            response.raise_for_status()
 
         bubble_object = response.json()["response"]
         if bubble_object:
@@ -233,12 +239,11 @@ class BubbleThing(NamesMixin, Thingy):
     async def put(self, **params):
         self._dump_params(params)
         async with self._get_client() as client:
-            response = await client.put(
+            await client.put(
                 f"/api/1.1/obj/{self.__class__.typename}/{self._id}",
                 params=params,
                 json=self.view("bubble"),
             )
-            response.raise_for_status()
         return self
 
     async def post(self, **params):
@@ -249,7 +254,6 @@ class BubbleThing(NamesMixin, Thingy):
                 params=params,
                 json=self.view("bubble"),
             )
-            response.raise_for_status()
             self._id = response.json()["id"]
         return self
 

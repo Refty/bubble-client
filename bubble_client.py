@@ -17,8 +17,12 @@ class Cursor:
     async def _get_page(self):
         self.params["cursor"] = self.index
 
+        params = self.params.copy()
+        for key, value in params.items():
+            if not isinstance(value, str):
+                params[key] = json.dumps(value)
+
         async with AsyncClient(base_url=self.cls.base_url) as client:
-            params = {key: json.dumps(value) for key, value in self.params.items()}
             response = await client.get(
                 f"/api/1.1/obj/{self.cls.typename}",
                 params=params,

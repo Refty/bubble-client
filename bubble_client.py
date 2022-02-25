@@ -5,6 +5,43 @@ import httpx
 from thingy import NamesMixin, Thingy, classproperty
 
 
+class Join:
+    def __init__(self, cursor_or_cls, key):
+        if isinstance(cursor_or_cls, Cursor):
+            self.cursor = cursor_or_cls
+            self.getter = self.get_from_cursor
+        else:
+            self.getter = cursor_or_cls._get_by_id
+
+        self.key = key
+        self.cache = {}
+
+    async def get_from_cursor(self, id):
+        self.cursor.cache = True
+
+        async for other in self.cursor:
+            if other._id == id:
+                self.cursor.rewind()
+                return other
+
+    async def get(self, id):
+        if isinstance(id, list):
+            return [await self.get(i) for i in id]
+
+        other = self.cache.get(id)
+        if not other:
+            other = await self.getter(id)
+        self.cache[id] = other
+        return other
+
+    async def __call__(self, thing):
+        other_id = getattr(thing, self.key)
+        if other_id:
+            other = await self.get(other_id)
+            setattr(thing, self.key, other)
+        return thing
+
+
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, (datetime.date, datetime.datetime)):
@@ -34,7 +71,7 @@ class Cursor:
         self.params = params
         self.index = self.params.get("cursor", 0)
         self.page = None
-        self.joins = {}
+        self.joins = []
         self.cache = cache
         self.cached = []
 
@@ -78,8 +115,8 @@ class Cursor:
         self.index += 1
         bubble_object = self.cls(bubble_object)
 
-        for key, cursor_or_other_cls in self.joins.items():
-            await bubble_object.join(key, cursor_or_other_cls)
+        for join in self.joins:
+            await join(bubble_object)
 
         if self.cache:
             self.cached.append(bubble_object)
@@ -93,9 +130,9 @@ class Cursor:
     def rewind(self):
         self.index = 0
 
-    def join(self, key, cursor_or_other_cls, **params):
-        self.joins[key] = cursor_or_other_cls
-        return self
+    def join(self, key, cursor_or_cls):
+        join = Join(cursor_or_cls, key)
+        self.joins.append(join)
 
 
 class BubbleThing(NamesMixin, Thingy):
@@ -190,56 +227,8 @@ class BubbleThing(NamesMixin, Thingy):
         params["limit"] = 1
         return await cls.get(**params).count()
 
-    async def _join_by_cursor(self, key, cursor):
-        other_id_or_ids = getattr(self, key)
-        if not other_id_or_ids:
-            return
-        cursor.cache = True
-
-        # TODO: fill with None when we can't find an id and guarantee the original order
-        if isinstance(other_id_or_ids, list):
-            others = []
-            async for other in cursor:
-                for index, other_id in enumerate(other_id_or_ids):
-                    if other._id == other_id:
-                        cursor.rewind()
-                        others.append(other)
-                        other_id_or_ids.pop(index)
-                        break
-                if len(other_id_or_ids) == 0:
-                    break
-            setattr(self, key, others)
-            return
-        else:
-            async for other in cursor:
-                if other._id == other_id_or_ids:
-                    cursor.rewind()
-                    setattr(self, key, other)
-                    break
-            else:
-                setattr(self, key, None)
-
-    async def _join_by_cls(self, key, other_cls, **params):
-        other_id_or_ids = getattr(self, key)
-        if not other_id_or_ids:
-            return
-
-        # TODO: use a constraint and filter on the ids instead
-        if isinstance(other_id_or_ids, list):
-            others = []
-            for other_id in other_id_or_ids:
-                other = await other_cls._get_by_id(other_id, **params)
-                others.append(other)
-            setattr(self, key, others)
-        else:
-            other = await other_cls._get_by_id(other_id_or_ids, **params)
-            setattr(self, key, other)
-
-    async def join(self, key, cursor_or_other_cls, **params):
-        if isinstance(cursor_or_other_cls, Cursor):
-            return await self._join_by_cursor(key, cursor_or_other_cls)
-        else:
-            return await self._join_by_cls(key, cursor_or_other_cls, **params)
+    async def join(self, key, cursor_or_cls):
+        return await Join(cursor_or_cls, key)(self)
 
     async def put(self, **params):
         self._dump_params(params)

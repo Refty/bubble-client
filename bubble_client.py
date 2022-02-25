@@ -78,8 +78,8 @@ class Cursor:
         self.index += 1
         bubble_object = self.cls(bubble_object)
 
-        for key, cursor in self.joins.items():
-            await bubble_object.join(key, cursor)
+        for key, cursor_or_other_cls in self.joins.items():
+            await bubble_object.join(key, cursor_or_other_cls)
 
         if self.cache:
             self.cached.append(bubble_object)
@@ -94,8 +94,6 @@ class Cursor:
         self.index = 0
 
     def join(self, key, cursor_or_other_cls, **params):
-        if not isinstance(cursor_or_other_cls, Cursor):
-            cursor_or_other_cls = Cursor(cursor_or_other_cls, params, cache=True)
         self.joins[key] = cursor_or_other_cls
         return self
 

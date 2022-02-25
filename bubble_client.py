@@ -65,8 +65,10 @@ class Cursor:
             self.index += 1
             return bubble_object
 
-        if not self.page or self.page_index == self.page["count"]:
-            self.page = await self._get_page()
+        if not self.page or (self.page_index == self.page["count"]):
+            limit = self.params.get("limit")
+            if not limit or self.index < limit:
+                self.page = await self._get_page()
 
         try:
             bubble_object = self.page["results"][self.page_index]
@@ -149,7 +151,7 @@ class BubbleThing(NamesMixin, Thingy):
     @classmethod
     def _dump_params(cls, params):
         for key, value in params.items():
-            if not isinstance(value, str):
+            if not isinstance(value, (str, int)):
                 params[key] = json.dumps(value, cls=cls._json_encoder)
 
     @classmethod

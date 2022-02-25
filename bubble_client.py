@@ -19,8 +19,10 @@ class AsyncClient(httpx.AsyncClient):
         if "json" in kwargs:
             content = kwargs.pop("json")
             kwargs["content"] = json.dumps(content, cls=self._json_encoder)
-            kwargs.setdefault("headers", {})
-            kwargs["headers"]["Content-Type"] = "application/json"
+            headers = kwargs.get("headers")
+            if headers is None:
+                headers = {}
+            kwargs["headers"] = headers | {"Content-Type": "application/json"}
         return await super().request(*args, **kwargs)
 
 

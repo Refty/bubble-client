@@ -229,12 +229,12 @@ class BubbleThing(NamesMixin, Thingy):
         # TODO: use a constraint and filter on the ids instead
         if isinstance(other_id_or_ids, list):
             others = []
-            async for other_id in other_id_or_ids:
-                other = other_cls._get_by_id(other_id, **params)
+            for other_id in other_id_or_ids:
+                other = await other_cls._get_by_id(other_id, **params)
                 others.append(other)
             setattr(self, key, others)
         else:
-            other = await other_cls._get_by_id(other_id, **params)
+            other = await other_cls._get_by_id(other_id_or_ids, **params)
             setattr(self, key, other)
 
     async def join(self, key, cursor_or_other_cls, **params):

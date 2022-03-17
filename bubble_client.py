@@ -18,10 +18,10 @@ class Join:
 
     async def get_from_cursor(self, id):
         self.cursor.cache = True
+        self.cursor.rewind()
 
         async for other in self.cursor:
             if other._id == id:
-                self.cursor.rewind()
                 return other
 
     async def get(self, id):

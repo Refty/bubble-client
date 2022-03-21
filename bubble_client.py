@@ -60,7 +60,17 @@ class AsyncClient(httpx.AsyncClient):
         kwargs.setdefault("event_hooks", {"response": [raise_for_status]})
         super().__init__(*args, **kwargs)
 
+    @classmethod
+    def _dump_params(cls, params):
+        for key, value in params.items():
+            if not isinstance(value, (str, int)):
+                params[key] = json.dumps(value, cls=cls._json_encoder)
+
     async def request(self, *args, **kwargs):
+        params = kwargs.get("params")
+        if params:
+            self._dump_params(params)
+
         if "json" in kwargs:
             content = kwargs.pop("json")
             kwargs["content"] = json.dumps(content, cls=self._json_encoder)
@@ -191,19 +201,11 @@ class BubbleThing(NamesMixin, Thingy):
         )
 
     @classmethod
-    def _dump_params(cls, params):
-        for key, value in params.items():
-            if not isinstance(value, (str, int)):
-                params[key] = json.dumps(value, cls=cls._json_encoder)
-
-    @classmethod
     def get(cls, **params):
-        cls._dump_params(params)
         return Cursor(cls, params)
 
     @classmethod
     async def _get_by_id(cls, id, **params):
-        cls._dump_params(params)
         async with cls._get_client() as client:
             response = await client.get(
                 f"/api/1.1/obj/{cls.typename}/{id}",
@@ -237,7 +239,6 @@ class BubbleThing(NamesMixin, Thingy):
         return await Join(cursor_or_cls, key)(self)
 
     async def put(self, **params):
-        self._dump_params(params)
         async with self._get_client() as client:
             await client.put(
                 f"/api/1.1/obj/{self.__class__.typename}/{self._id}",
@@ -247,7 +248,6 @@ class BubbleThing(NamesMixin, Thingy):
         return self
 
     async def post(self, **params):
-        self._dump_params(params)
         async with self._get_client() as client:
             response = await client.post(
                 f"/api/1.1/obj/{self.__class__.typename}",

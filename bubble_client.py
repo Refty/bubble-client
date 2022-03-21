@@ -46,6 +46,8 @@ class JSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, (datetime.date, datetime.datetime)):
             return o.isoformat()
+        if isinstance(o, BubbleThing):
+            return o.view("bubble")
         return json.JSONEncoder.default(self, o)
 
 
@@ -243,7 +245,7 @@ class BubbleThing(NamesMixin, Thingy):
             await client.put(
                 f"/api/1.1/obj/{self.__class__.typename}/{self._id}",
                 params=params,
-                json=self.view("bubble"),
+                json=self,
             )
         return self
 
@@ -252,7 +254,7 @@ class BubbleThing(NamesMixin, Thingy):
             response = await client.post(
                 f"/api/1.1/obj/{self.__class__.typename}",
                 params=params,
-                json=self.view("bubble"),
+                json=self,
             )
             self._id = response.json()["id"]
         return self

@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+import datetime
 
 import httpx
 from thingy import NamesMixin, Thingy, classproperty

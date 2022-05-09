@@ -52,7 +52,11 @@ class JSONEncoder(json.JSONEncoder):
 
 
 async def raise_for_status(response):
-    response.raise_for_status()
+    try:
+        response.raise_for_status()
+    except httpx.HTTPStatusError:
+        await response.aread()
+        raise
 
 
 class AsyncClient(httpx.AsyncClient):

@@ -183,6 +183,9 @@ class BubbleThing(NamesMixin, Thingy):
     def __eq__(self, other):
         return self._id == other._id
 
+    def __hash__(self):
+        return hash(self._id)
+
     @classmethod
     def configure(cls, base_url, token, headers=None):
         cls._base_url = base_url

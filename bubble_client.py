@@ -180,6 +180,9 @@ class BubbleThing(NamesMixin, Thingy):
         self.__dict__ = __dict__
         self.add_view("bubble", include=includes)
 
+    def __eq__(self, other):
+        return self._id == other._id
+
     @classmethod
     def configure(cls, base_url, token, headers=None):
         cls._base_url = base_url

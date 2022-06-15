@@ -79,6 +79,16 @@ User({'name': 'Mr. Hyde', ...})
 'Mr. Hyde'
 ```
 
+* Search!
+
+```python
+>>> constraints = [{'key': 'name', 'constraint_type': 'equals', 'value': 'Mr. Hyde'}]
+
+>>> pet = await Pet.get_one(id=None, constraints=constraints)
+>>> pet.name
+'Mr. Hyde'
+```
+
 * Also works on cursors!
 
 ```python

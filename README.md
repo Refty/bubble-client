@@ -62,6 +62,16 @@ User({'name': 'Dr. Jekyll', ...})
 3
 ```
 
+* Search!
+
+```python
+>>> constraints = [{'key': 'name', 'constraint_type': 'equals', 'value': 'Mr. Hyde'}]
+
+>>> pet = await Pet.get_one(constraints=constraints)
+>>> pet.name
+'Mr. Hyde'
+```
+
 * Join stuff!
 
 ```python
@@ -76,16 +86,6 @@ User({'name': 'Dr. Jekyll', ...})
 >>> pet.created_by
 User({'name': 'Mr. Hyde', ...})
 >>> pet.created_by.name
-'Mr. Hyde'
-```
-
-* Search!
-
-```python
->>> constraints = [{'key': 'name', 'constraint_type': 'equals', 'value': 'Mr. Hyde'}]
-
->>> pet = await Pet.get_one(id=None, constraints=constraints)
->>> pet.name
 'Mr. Hyde'
 ```
 

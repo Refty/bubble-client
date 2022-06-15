@@ -271,8 +271,8 @@ class BubbleThing(NamesMixin, Thingy):
 
     async def save(self, **params):
         if self._id:
-            return self.put(**params)
-        return self.post(**params)
+            return await self.put(**params)
+        return await self.post(**params)
 
 
 configure = BubbleThing.configure

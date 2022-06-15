@@ -16,14 +16,12 @@ setup(
     long_description=get_description(),
     long_description_content_type="text/markdown",
     py_modules=["bubble_client"],
-    python_requires=">=3.7, <4",
+    python_requires=">=3.9, <4",
     install_requires=[
         "thingy >= 0.8.5",
         "httpx >= 0.21.3",
     ],
     classifiers=[
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Development Status :: 4 - Beta",

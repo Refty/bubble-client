@@ -83,7 +83,7 @@ class AsyncClient(httpx.AsyncClient):
             headers = kwargs.get("headers")
             if headers is None:
                 headers = {}
-            kwargs["headers"] = headers | {"Content-Type": "application/json"}
+            kwargs["headers"] = {**headers, **{"Content-Type": "application/json"}}
         return await super().request(*args, **kwargs)
 
 

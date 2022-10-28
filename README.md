@@ -104,3 +104,9 @@ Pet({'type': 'donkey', 'created_by': User({'name': 'Beatrix Emery', ...}), ...})
 >>> constraints = [{'key': 'name', 'constraint_type': 'equals', 'value': 'Beatrix Emery'}]
 >>> pet = await Project.get_one(constraints=constraints)
 >>> await pet.delete()
+
+Tips
+--------
+* Use asyncio.run(main()) if you are getting errors that you can't use async/wait in the main body of python code
+* Avoid using dash in table names (python object names can't have dash)
+* Base URL does not need the /api/1.1/obj portion!

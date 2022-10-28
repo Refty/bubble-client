@@ -97,3 +97,10 @@ User({'name': 'Mr. Hyde', ...})
 Pet({'type': 'dog', 'created_by': User({'name': 'Mr. Hyde', ...}), ...})
 Pet({'type': 'donkey', 'created_by': User({'name': 'Beatrix Emery', ...}), ...})
 ```
+
+* Delete stuff!
+
+```python
+>>> constraints = [{'key': 'name', 'constraint_type': 'equals', 'value': 'Beatrix Emery'}]
+>>> pet = await Project.get_one(constraints=constraints)
+>>> await pet.delete()

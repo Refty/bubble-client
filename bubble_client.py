@@ -269,6 +269,14 @@ class BubbleThing(NamesMixin, Thingy):
             self._id = response.json()["id"]
         return self
 
+    async def delete(self, **params):
+        async with self._get_client() as client:
+            await client.delete(
+                f"/api/1.1/obj/{self.__class__.typename}/{self._id}",
+                params=params,
+            )
+        return self
+
     async def save(self, **params):
         if self._id:
             return await self.put(**params)
